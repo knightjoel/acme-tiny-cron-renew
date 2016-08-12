@@ -30,6 +30,8 @@ The script makes the following assumptions:
 - Once a certificate is renewed, you will be taking steps to restart your web
   server (or whatever service/daemon is using the cert) out of band of what the
   script is doing
+- The python binary is in the unprivileged user's `$PATH` as either `python` or
+  `python2.7`
 
 ## Installation
 

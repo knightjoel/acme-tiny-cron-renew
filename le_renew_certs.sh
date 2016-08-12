@@ -35,10 +35,14 @@ DOMAINS_TXT="/etc/ssl/lets_encrypt_domains.txt"
 INTERMEDIATE_CERTS="/etc/ssl/lets-encrypt-x3-cross-signed.pem /etc/ssl/isrgrootx1.pem"
 LE_KEY="$HOME/keys/account.key"
 WORK_DIR="$HOME"
-# if your python installation doesn't have a 'python' binary or symlink,
-# uncomment the line below
-alias python=/usr/local/bin/python2.7
 
+python -V >/dev/null 2>&1 || {
+	alias python=python2.7
+	python2.7 -V >/dev/null 2>&1 || {
+		echo "Python is required but couldn't be found. Exiting."
+		exit 1
+	}
+}
 
 install_cert() {
 	local dom=$1
