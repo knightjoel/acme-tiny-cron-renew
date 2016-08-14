@@ -89,8 +89,8 @@ Finally, edit the unprivileged user's crontab and add an entry to run
 
 ### Step 3: Install Let's Encrypt certificates
 
-The Let's Encrypt intermediate cert and the cross signing root cert from ISRG
-are copied into a file named `<domain>.bundle.crt` along with the actual
+The Let's Encrypt intermediate cert
+is copied into a file named `<domain>.bundle.crt` along with the actual
 domain's cert when a cert is renewed. This is done so that when a web browser,
 for example, receives the cert from the web server, it has the entire chain of
 trust from your domain's cert, all the way up to the trusted root cert.
@@ -108,7 +108,13 @@ Encrypt](https://letsencrypt.org/certificates/) site and save them at the
 specified location so `le_renew_certs.sh` knows where to find them:
 - Let's Encrypt Authority X3 (pem format) ->
   `/etc/ssl/lets-encrypt-x3-cross-signed.pem`
-- ISRG Root X1 (pem format) -> `/etc/ssl/isrgrootx1.pem`
+- Let's Encrypt Authority X4 (pem format) ->
+  `/etc/ssl/lets-encrypt-x4-cross-signed.pem`
+
+The X4 cert is optional since Let's Encrypt states they use the X3 cert as
+their main issuing certificate and will only revert to the X4 in the case of a
+disaster. However, having the X4 in your certificate bundle prepares you for
+such an event and requires minimal overhead.
 
 ### Step 4: Create `/etc/ssl/lets_encrypt_domains.txt`
 
