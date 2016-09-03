@@ -32,7 +32,7 @@
 ACME_CHALLENGES_DIR="$HOME/acme-challenges"
 ACME_TINY="$HOME/acme-tiny/acme_tiny.py"
 DOMAINS_TXT="/etc/ssl/lets_encrypt_domains.txt"
-INTERMEDIATE_CERTS="/etc/ssl/lets-encrypt-x{3,4}-cross-signed.pem"
+INTERMEDIATE_CERTS="/etc/ssl/lets-encrypt-x3-cross-signed.pem /etc/ssl/lets-encrypt-x4-cross-signed.pem"
 LE_KEY="$HOME/keys/account.key"
 WORK_DIR="$HOME"
 
