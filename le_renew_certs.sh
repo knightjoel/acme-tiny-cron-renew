@@ -29,12 +29,10 @@
 # github.com/knightjoel/acme-tiny-cron-renew
 
 
-ACME_CHALLENGES_DIR="$HOME/acme-challenges"
-ACME_TINY="$HOME/acme-tiny/acme_tiny.py"
-DOMAINS_TXT="/etc/ssl/lets_encrypt_domains.txt"
+workdir=$HOME
+le_key="$workdir/le.key"
+
 INTERMEDIATE_CERTS="/etc/ssl/lets-encrypt-x3-cross-signed.pem /etc/ssl/lets-encrypt-x4-cross-signed.pem"
-LE_KEY="$HOME/keys/account.key"
-WORK_DIR="$HOME"
 
 python -V >/dev/null 2>&1 || {
 	alias python=python2.7
@@ -46,7 +44,7 @@ python -V >/dev/null 2>&1 || {
 
 install_cert() {
 	local dom=$1
-	local crt="$WORK_DIR/$dom.crt"
+	local crt="$workdir/$dom.crt"
 
 	echo
 	echo "+++ Installing certificate for $dom"
@@ -78,7 +76,7 @@ install_cert() {
 
 renew_cert() {
 	local dom=$1
-	local crt="$WORK_DIR/$dom.crt"
+	local crt="$workdir/$dom.crt"
 
 	echo
 	if [ -f $crt ]; then
@@ -86,23 +84,167 @@ renew_cert() {
 	else
 		echo "+++ Creating a certificate for $dom"
 	fi
-	python $ACME_TINY \
-		--account-key $LE_KEY \
-		--csr /etc/ssl/${dom}.csr \
-		--acme-dir $ACME_CHALLENGES_DIR \
-		> $crt
+	if [ "$validation" = "dns" ]; then
+		python $acmetiny \
+			--account-key $key \
+			--csr /etc/ssl/${dom}.csr \
+			--dns-zone $zone \
+			> $crt
+	elif [ "$validation" = "http" ]; then
+		python $acmetiny \
+			--account-key $key \
+			--csr /etc/ssl/${dom}.csr \
+			--acme-dir $challengedir \
+			> $crt
+	else
+		echo "Invalid validation method. Unable to fetch certificate."
+	fi
 }
 
-while :; do
-	read dom || break
-	case "$dom" in
-	"#"*|"")
-		continue
-		;;
-	*)
-		renew_cert $dom
-		install_cert $dom
-		;;
+usage() {
+	cat <<EOT
+`basename $0`
+	-a | --acmetiny <acme_tiny.py>
+		The fully qualified path to the acme_tiny.py (for http
+		validation) or acme_tiny_dns.py (for dns validation) script.
+
+	-c | --challengedir </path/to/.well-known/acme-challenge/>
+		The fully qualified path to the /.well-known/acme-challenge
+		directory. Must match what's configured in the web server. Must
+		be writable by the user running the script.
+
+	-d | --domainlist <domains.txt>|domain.com
+		Either of:
+		1. The path to a text file containing a list of domain names,
+		one per line, which should have their certificate renewed.
+		2. The name of a single domain which will be renewed.
+
+	-k | --key <account.key>
+		The path to the file containing the Let's Encrypt account key.
+		Default: $workdir/le.key
+
+	-v | --validation dns|http
+		The validation method to use to prove ownership of the
+		domain(s) being renewed.
+		"dns" - Create DNS records using acme_tiny_dns.py
+		"http" - Use the /.well-known/acme-challenge/ directory via
+		acme_tiny.py
+
+	-w | --workdir <directory>
+		The fully qualified path to a directory to use as the working
+		directory. The work directory is used to store certificates
+		before pairing them with their signing certs and installing
+		the bundle in /etc/ssl.
+		Default: $HOME
+
+	-z | --zone <domain.com>
+		The name of the DNS zone to update when using the "dns"
+		validation method.
+EOT
+}
+
+if [ -z "$1" ]; then
+	usage
+	exit 1
+fi
+
+while [ -n "$1" ];
+do
+	case $1 in
+		-a | --acmetiny )
+			shift
+			acmetiny=$1
+			;;
+		-c | --challengedir )
+			shift
+			challengedir=$1
+			;;
+		-d | --domainlist )
+			shift
+			domainlist=$1
+			;;
+		-k | --key )
+			shift
+			key=$1
+			;;
+		-v | --validation )
+			shift
+			validation=$1
+			;;
+		-w | --workdir )
+			shift
+			workdir=$1
+			;;
+		-z | --zone )
+			shift
+			zone=$1
+			;;
+		* )
+			usage
+			exit 1
 	esac
-done < $DOMAINS_TXT
+	shift
+done
+
+# validate command line and runtime options are sane
+if [ -z "$acmetiny" ]; then
+	echo "You must specify the path to acme_tiny.py with --acmetiny."
+	exit 1
+fi
+if [ ! -f "$acmetiny" -a ! -h "$acmetiny" ]; then
+	echo "$acmetiny doesn't appear to be a Python script."
+	echo "Specify path to acme-tiny.py with --acmetiny."
+	exit 1
+fi
+
+if [ -z "$domainlist" ]; then
+	echo "You must specify the domain(s) to renew with --domainlist."
+	exit 1
+fi
+
+if [ ! -f "$key" ]; then
+	echo "You must specify the location of the Let's Encrypt account key with --key."
+	exit 1
+fi
+
+if [ ! -d "$workdir" ]; then
+	echo "You must specify the location of the working directory with --workdir."
+	exit 1
+fi
+
+if [ -z "$validation" ]; then
+	echo "You must specify a validation method with --validation."
+	exit 1
+fi
+if [ "$validation" != "dns" -a "$validation" != "http" ]; then
+	echo "The supported validation methods are 'dns' and 'http'."
+	exit 1
+fi
+if [ "$validation" = "http" -a ! -d "$challengedir" ]; then
+	echo "You must specify a valid challenge directory with --challengedir."
+	exit 1
+fi
+if [ "$validation" = "dns" -a -z "$zone" ]; then
+	echo "You must specify a DNS zone with --zone."
+	exit 1
+fi
+
+# begin
+if [ -f "$domainlist" ]; then
+	while :; do
+		read dom || break
+		case "$dom" in
+		"#"*|"")
+			continue
+			;;
+		*)
+			renew_cert $dom
+			install_cert $dom
+			;;
+		esac
+	done < $domainlist
+else
+	renew_cert $domainlist
+	install_cert $domainlist
+fi
 
