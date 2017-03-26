@@ -67,40 +67,40 @@ executable.
 Review this list of command line options so you know how to properly execute
 the script:
 
-- `-a | --acmetiny <acme_tiny.py>`
+- `-a | --acmetiny <acme_tiny.py>`  
 	The fully qualified path to the acme_tiny.py (for http
 	validation) or acme_tiny_dns.py (for dns validation) script.
 
-- `-c | --challengedir </path/to/.well-known/acme-challenge/>`
-	The fully qualified path to the /.well-known/acme-challenge
+- `-c | --challengedir </path/to/.well-known/acme-challenge/>`  
+	The fully qualified path to the `/.well-known/acme-challenge`
 	directory. Must match what's configured in the web server. Must
 	be writable by the user running the script.
 
-- `-d | --domainlist <domains.txt>|domain.com`
-	Either of:
+- `-d | --domainlist <domains.txt>|domain.com`  
+	Either of:  
 	1) The path to a text file containing a list of domain names,
-	one per line, which should have their certificate renewed.
+	one per line, which should have their certificate renewed.  
 	2) The name of a single domain which will be renewed.
 
-- `-k | --key <account.key>`
-	The path to the file containing the Let's Encrypt account key.
-	Default: $workdir/le.key
+- `-k | --key <account.key>`  
+	The path to the file containing the Let's Encrypt account key.  
+	Default: `$workdir/le.key`
 
-- `-v | --validation dns|http`
+- `-v | --validation dns|http`  
 	The validation method to use to prove ownership of the
-	domain(s) being renewed.
-	"`dns`" - Create DNS records using acme_tiny_dns.py
+	domain(s) being renewed.  
+	"`dns`" - Create DNS records using acme_tiny_dns.py  
 	"`http`" - Use the `/.well-known/acme-challenge/` directory via
 	acme_tiny.py
 
-- `-w | --workdir <directory>`
+- `-w | --workdir <directory>`  
 	The fully qualified path to a directory to use as the working
 	directory. The work directory is used to store certificates
 	before pairing them with their signing certs and installing
-	the bundle in `/etc/ssl`.
+	the bundle in `/etc/ssl`.  
 	Default: `$HOME`
 
-- `-z | --zone <domain.com>`
+- `-z | --zone <domain.com>`  
 	The name of the DNS zone to update when using the "dns"
 	validation method.
 
