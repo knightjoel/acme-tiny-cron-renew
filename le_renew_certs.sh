@@ -3,7 +3,7 @@
 # le_renew_certs.sh
 #
 #
-# Copyright (c) 2016 Joel Knight
+# Copyright (c) 2016,2017 Joel Knight
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -202,13 +202,19 @@ if [ -z "$domainlist" ]; then
 	exit 1
 fi
 
-if [ ! -f "$key" ]; then
-	echo "You must specify the location of the Let's Encrypt account key with --key."
+if [ -z "$workdir" ]; then
+	workdir=$HOME
+fi
+if [ ! -d "$workdir" ]; then
+	echo "You must specify the location of the working directory with --workdir."
 	exit 1
 fi
 
-if [ ! -d "$workdir" ]; then
-	echo "You must specify the location of the working directory with --workdir."
+if [ -z "$key" ]; then
+	key="$workdir/le.key"
+fi
+if [ ! -f "$key" ]; then
+	echo "You must specify the location of the Let's Encrypt account key with --key."
 	exit 1
 fi
 
