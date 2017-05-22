@@ -7,7 +7,8 @@ scripts by providing an automated, reduced privilege way of renewing [Let's
 Encrypt](https://letsencrypt.org/) certificates.
 
 - Runs automatically via a cron job
-- Runs as a non-root user
+- Drops privileges to a non-root user for doing the actual renewal operation
+- Uses root privileges only for installing the renewed, validated certificate
 - Installs a complete certificate bundle which includes the domain's
   certificate, the Let's Encrypt intermediate certificate and the ISRG
   cross-signing root certificate
@@ -40,19 +41,16 @@ The script makes the following assumptions:
 
 If you haven't already done so when installing acme-tiny, create an unprivilved
 (non-root) user account that will own the Let's Encrypt account key and be
-responsible for running acme-tiny and `le_renew_certs.sh`. This is recommended
-in order to avoid running any software used in this process as the root user.
+responsible for running acme-tiny.
 
-The user should be a member of a unique group, and not a shared group, such as
-`staff`.
-
-In my environment, I created a user named `le` and added the user to a new
-group also called `le`.
+In my environment, I created a user named `le`.
 
 ```
 # id le
 uid=1005(le) gid=1005(le) groups=1005(le)
 ```
+
+Alternatively, you could just use your regular, non-root account.
 
 ### Step 2: Install le\_renew\_certs.sh
 
@@ -86,6 +84,13 @@ the script:
 	The path to the file containing the Let's Encrypt account key.  
 	Default: `$workdir/le.key`
 
+- `-u | --user <username>`
+	The name of the unprivileged user to run external commands as.
+	le_renew_certs.sh will drop privileges to <username> when running
+	external scripts but will use root privileges for installing
+	the certificate bundle.
+	Default: le
+
 - `-v | --validation dns|http`  
 	The validation method to use to prove ownership of the
 	domain(s) being renewed.  
@@ -98,18 +103,18 @@ the script:
 	directory. The work directory is used to store certificates
 	before pairing them with their signing certs and installing
 	the bundle in `/etc/ssl`.  
-	Default: `$HOME`
+	Default: `/home/le`
 
 - `-z | --zone <domain.com>`  
 	The name of the DNS zone to update when using the "dns"
 	validation method.
 
-Finally, edit the unprivileged user's crontab and add an entry to run
+Finally, edit root's crontab and add an entry to run
 `le_renew_certs.sh` once a month.
 
 ```
 # Renew certs at 00:15 on the 15th of each month
-15      0       15       *       *       $HOME/le_renew_certs.sh -a $HOME/acme_tiny.py -k $HOME/le.key -d /etc/ssl/lets_encrypt_domains.txt -w $HOME -v http -c /var/www/htdocs/.well-known/acme-challenge/
+15      0       15       *       *       /home/le/le_renew_certs.sh -a /home/le/acme_tiny.py -k /home/le/le.key -d /etc/ssl/lets_encrypt_domains.txt -w /home/le -v http -c /var/www/htdocs/.well-known/acme-challenge/
 ```
 
 ### Step 3: Install Let's Encrypt certificates
@@ -154,35 +159,19 @@ file, `le_renew_certs.sh` will:
 domain names that you use to name your `.csr` files. The SANs will be picked up
 from the CSR.
 
-Ensure that the unprivileged user has read access to the
-`lets_encrypt_domains.txt` file.
+### Step 5: Test
 
-### Step 5: Modify permissions on bundle files
-
-Grant the unprivileged user write permissions to each `.bundle.crt` file. If
-the files don't exist yet (because you haven't run the script yet or you stored
-your certs in a different file), just `touch` the file and then change
-permissions.
-
-```
-# touch /etc/ssl/packetmischief.ca.bundle.crt
-# chgrp le /etc/ssl/packetmischief.ca.bundle.crt
-# chmod 664 /etc/ssl/packetmischief.ca.bundle.crt
-```
-
-### Step 6: Test
-
-Everything should be ready now. As the unprivileged user, execute the
+Everything should be ready now. As root, execute the
 `le_renew_certs.sh` script.
 
 ```
-le@server% cat /etc/ssl/lets_encrypt_domains.txt
+root@server# cat /etc/ssl/lets_encrypt_domains.txt
 packetmischief.ca
 
-le@server% ls -l /etc/ssl/packetmischief.ca.bundle.crt
+root@server# ls -l /etc/ssl/packetmischief.ca.bundle.crt
 -rw-rw-r--  1 root  le  0 Mar  8 08:51 /etc/ssl/packetmischief.ca.bundle.crt
 
-le@server% ./le_renew_certs.sh -a $HOME/acme_tiny.py -k $HOME/le.key -d /etc/ssl/lets_encrypt_domains.txt -w $HOME -v http -c /var/www/htdocs/.well-known/acme-challenge/
+root@server# ./le_renew_certs.sh -a /home/le/acme_tiny.py -k /home/le/le.key -d /etc/ssl/lets_encrypt_domains.txt -w /home/le -v http -c /var/www/htdocs/.well-known/acme-challenge/
 +++ Renewing packetmischief.ca
 Parsing account key...
 Parsing CSR...
@@ -201,10 +190,4 @@ Installed updated certificate bundle as /etc/ssl/packetmischief.ca.bundle.crt
 ```
 
 At this point the web server can be reloaded to have it pick up the new
-certificate. For example, in the unprivileged user's crontab:
-
-```
-# Renew certs at 00:15 on the 15th of each month
-15      0       15       *       *       $HOME/le_renew_certs.sh -a $HOME/acme_tiny.py -k $HOME/le.key -d /etc/ssl/lets_encrypt_domains.txt -w $HOME -v http -c /var/www/htdocs/.well-known/acme-challenge/ && nginx -s reload
-```
-
+certificate.

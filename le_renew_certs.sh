@@ -29,18 +29,19 @@
 # github.com/knightjoel/acme-tiny-cron-renew
 
 
-workdir=$HOME
+unpriv_user=le
 le_key="$workdir/le.key"
 
 INTERMEDIATE_CERTS="/etc/ssl/lets-encrypt-x3-cross-signed.pem /etc/ssl/lets-encrypt-x4-cross-signed.pem"
 
-python -V >/dev/null 2>&1 || {
-	alias python=python2.7
-	python2.7 -V >/dev/null 2>&1 || {
-		echo "Python is required but couldn't be found. Exiting."
-		exit 1
-	}
-}
+if which python >/dev/null 2>&1; then
+	_python="python"
+elif which python2.7 >/dev/null 2>&1; then
+	_python="python2.7"
+else
+	echo "Python is required but couldn't be found. Exiting."
+	exit 1
+fi
 
 install_cert() {
 	local dom=$1
@@ -55,7 +56,7 @@ install_cert() {
 	fi
 
 	echo -n "Checking certificate validity... "
-	openssl x509 -noout -in $crt 2>/dev/null
+	unpriv openssl x509 -noout -in $crt 2>/dev/null
 	if [ $? -ne 0 ]; then
 		echo "Invalid certificate file."
 		echo "Skipping."
@@ -67,6 +68,7 @@ install_cert() {
 	name=${name%%.crt}
 	bundle="/etc/ssl/${name}.bundle.crt"
 	if [ -w $bundle ]; then
+		# as root...
 		cat $crt $INTERMEDIATE_CERTS > $bundle
 		echo "Installed updated certificate bundle as $bundle"
 	else
@@ -85,17 +87,17 @@ renew_cert() {
 		echo "+++ Creating a certificate for $dom"
 	fi
 	if [ "$validation" = "dns" ]; then
-		python $acmetiny \
+		unpriv "$_python $acmetiny \
 			--account-key $key \
 			--csr /etc/ssl/${dom}.csr \
 			--dns-zone $zone \
-			> $crt
+			> $crt"
 	elif [ "$validation" = "http" ]; then
-		python $acmetiny \
+		unpriv "$_python $acmetiny \
 			--account-key $key \
 			--csr /etc/ssl/${dom}.csr \
 			--acme-dir $challengedir \
-			> $crt
+			> $crt"
 	else
 		echo "Invalid validation method. Unable to fetch certificate."
 	fi
@@ -123,6 +125,13 @@ usage() {
 		The path to the file containing the Let's Encrypt account key.
 		Default: $workdir/le.key
 
+	-u | --user <username>
+		The name of the unprivileged user to run external commands as.
+		`basename $0` will drop privileges to <username> when running
+		external scripts but will use root privileges for installing
+		the certificate bundle.
+		Default: $unpriv_user
+
 	-v | --validation dns|http
 		The validation method to use to prove ownership of the
 		domain(s) being renewed.
@@ -135,7 +144,7 @@ usage() {
 		directory. The work directory is used to store certificates
 		before pairing them with their signing certs and installing
 		the bundle in /etc/ssl.
-		Default: $HOME
+		Default: /home/${unpriv_user}
 
 	-z | --zone <domain.com>
 		The name of the DNS zone to update when using the "dns"
@@ -143,8 +152,17 @@ usage() {
 EOT
 }
 
+unpriv() {
+	eval su -s /bin/sh ${unpriv_user} -c "'$@'"
+}
+
 if [ -z "$1" ]; then
 	usage
+	exit 1
+fi
+
+if [ `id -u` -ne 0 ]; then
+	echo "Requires root privileges."
 	exit 1
 fi
 
@@ -166,6 +184,10 @@ do
 		-k | --key )
 			shift
 			key=$1
+			;;
+		-u | --user )
+			shift
+			unpriv_user=$1
 			;;
 		-v | --validation )
 			shift
@@ -203,7 +225,7 @@ if [ -z "$domainlist" ]; then
 fi
 
 if [ -z "$workdir" ]; then
-	workdir=$HOME
+	workdir=/home/${unpriv_user}
 fi
 if [ ! -d "$workdir" ]; then
 	echo "You must specify the location of the working directory with --workdir."
