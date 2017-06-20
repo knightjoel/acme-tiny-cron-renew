@@ -156,6 +156,10 @@ unpriv() {
 	eval su -s /bin/sh ${unpriv_user} -c "'$@'"
 }
 
+if [ -z "$workdir" ]; then
+	workdir=/home/${unpriv_user}
+fi
+
 if [ -z "$1" ]; then
 	usage
 	exit 1
@@ -224,9 +228,6 @@ if [ -z "$domainlist" ]; then
 	exit 1
 fi
 
-if [ -z "$workdir" ]; then
-	workdir=/home/${unpriv_user}
-fi
 if [ ! -d "$workdir" ]; then
 	echo "You must specify the location of the working directory with --workdir."
 	exit 1
