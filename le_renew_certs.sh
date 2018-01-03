@@ -3,7 +3,7 @@
 # le_renew_certs.sh
 #
 #
-# Copyright (c) 2016,2017 Joel Knight
+# Copyright (c) 2016-2018 Joel Knight
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,8 +38,10 @@ if which python >/dev/null 2>&1; then
 	_python="python"
 elif which python2.7 >/dev/null 2>&1; then
 	_python="python2.7"
+elif which python3.6 >/dev/null 2>&1; then
+	_python="python3.6"
 else
-	echo "Python is required but couldn't be found. Exiting."
+	echo "$0: Python is required but couldn't be found. Exiting."
 	exit 1
 fi
 
