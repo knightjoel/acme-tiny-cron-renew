@@ -155,7 +155,7 @@ EOT
 }
 
 unpriv() {
-	eval su -s /bin/sh ${unpriv_user} -c "'$@'"
+	eval su ${unpriv_user} -c "'$@'"
 }
 
 if [ -z "$workdir" ]; then
