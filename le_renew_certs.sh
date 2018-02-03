@@ -34,16 +34,6 @@ le_key="$workdir/le.key"
 
 INTERMEDIATE_CERTS="/etc/ssl/lets-encrypt-x3-cross-signed.pem /etc/ssl/lets-encrypt-x4-cross-signed.pem"
 
-if which python >/dev/null 2>&1; then
-	_python="python"
-elif which python2.7 >/dev/null 2>&1; then
-	_python="python2.7"
-elif which python3.6 >/dev/null 2>&1; then
-	_python="python3.6"
-else
-	echo "$0: Python is required but couldn't be found. Exiting."
-	exit 1
-fi
 
 install_cert() {
 	local dom=$1
@@ -127,6 +117,11 @@ usage() {
 		The path to the file containing the Let's Encrypt account key.
 		Default: $workdir/le.key
 
+	-p | --python <path>
+		The fully qualified path to the Python interpreter on your
+		system. By default, the correct path will be searched for
+		by looking for common Python versions in common locations.
+
 	-u | --user <username>
 		The name of the unprivileged user to run external commands as.
 		`basename $0` will drop privileges to <username> when running
@@ -190,6 +185,10 @@ do
 		-k | --key )
 			shift
 			key=$1
+			;;
+		-p | --python )
+			shift
+			python=$1
 			;;
 		-u | --user )
 			shift
@@ -257,6 +256,20 @@ if [ "$validation" = "http" -a ! -d "$challengedir" ]; then
 fi
 if [ "$validation" = "dns" -a -z "$zone" ]; then
 	echo "You must specify a DNS zone with --zone."
+	exit 1
+fi
+
+# find the python binary
+if [ -n "$python" -a -x $python ]; then
+	_python=$python
+elif which python >/dev/null 2>&1; then
+	_python="python"
+elif which python2.7 >/dev/null 2>&1; then
+	_python="python2.7"
+elif which python3.6 >/dev/null 2>&1; then
+	_python="python3.6"
+else
+	echo "$0: Python is required but couldn't be found. Exiting."
 	exit 1
 fi
 

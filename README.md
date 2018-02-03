@@ -84,6 +84,11 @@ the script:
 	The path to the file containing the Let's Encrypt account key.  
 	Default: `$workdir/le.key`
 
+- `-p | --python <path>`  
+	The fully qualified path to the Python interpreter on your
+	system. By default, the correct path will be searched for
+	by looking for common Python versions in common locations.
+
 - `-u | --user <username>`
 	The name of the unprivileged user to run external commands as.
 	le_renew_certs.sh will drop privileges to <username> when running
