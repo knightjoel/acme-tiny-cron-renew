@@ -145,6 +145,8 @@ specified location so `le_renew_certs.sh` knows where to find them:
   `/etc/ssl/lets-encrypt-x3-cross-signed.pem`
 - Let's Encrypt Authority X4 (pem format) ->
   `/etc/ssl/lets-encrypt-x4-cross-signed.pem`
+- ISRG Root X1 (pem format) ->
+  `/etc/ssl/lets-encrypt-x1-root.pem`
 
 The X4 cert is optional since Let's Encrypt states they use the X3 cert as
 their main issuing certificate and will only revert to the X4 in the case of a

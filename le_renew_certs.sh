@@ -32,7 +32,7 @@
 unpriv_user=le
 le_key="$workdir/le.key"
 
-INTERMEDIATE_CERTS="/etc/ssl/lets-encrypt-x3-cross-signed.pem /etc/ssl/lets-encrypt-x4-cross-signed.pem"
+INTERMEDIATE_CERTS="/etc/ssl/lets-encrypt-x3-cross-signed.pem /etc/ssl/lets-encrypt-x4-cross-signed.pem /etc/ssl/lets-encrypt-x1-root.pem"
 
 
 install_cert() {
