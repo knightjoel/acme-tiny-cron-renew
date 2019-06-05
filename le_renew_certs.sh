@@ -268,6 +268,8 @@ elif which python2.7 >/dev/null 2>&1; then
 	_python="python2.7"
 elif which python3.6 >/dev/null 2>&1; then
 	_python="python3.6"
+elif which python3.7 >/dev/null 2>&1; then
+	_python="python3.7"
 else
 	echo "$0: Python is required but couldn't be found. Exiting."
 	exit 1
