@@ -160,12 +160,24 @@ packetmischief.ca
 root@server# ls -l /etc/ssl/packetmischief.ca.bundle.crt
 -rw-rw-r--  1 root  le  0 Mar  8 08:51 /etc/ssl/packetmischief.ca.bundle.crt
 
-root@server# ./le_renew_certs.sh -a /home/le/acme_tiny.py -k /home/le/le.key -d /etc/ssl/lets_encrypt_domains.txt -w /home/le -v http -c /var/www/htdocs/.well-known/acme-challenge/
+root@server# ./le_renew_certs.sh -a /home/le/acme_tiny.py \
+  -c /var/www/htdocs/.well-known/acme-challenge/
+  -k /home/le/le.key \
+  -d /etc/ssl/lets_encrypt_domains.txt \
+  -u le \
+  -v http \
+  -w /home/le \
+
 +++ Renewing packetmischief.ca
 Parsing account key...
 Parsing CSR...
+Found domains: packetmischief.ca, www.packetmischief.ca
+Getting directory...
+Directory found!
 Registering account...
 Already registered!
+Creating new order...
+Order created!
 Verifying packetmischief.ca...
 packetmischief.ca verified!
 Verifying www.packetmischief.ca...
