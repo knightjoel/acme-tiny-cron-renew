@@ -3,7 +3,7 @@
 # le_renew_certs.sh
 #
 #
-# Copyright (c) 2016-2018 Joel Knight
+# Copyright (c) 2016-2020 Joel Knight
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,8 +32,6 @@
 unpriv_user=le
 le_key="$workdir/le.key"
 
-INTERMEDIATE_CERTS="/etc/ssl/lets-encrypt-x3-cross-signed.pem /etc/ssl/lets-encrypt-x4-cross-signed.pem /etc/ssl/lets-encrypt-x1-root.pem"
-
 
 install_cert() {
 	local dom=$1
@@ -61,7 +59,7 @@ install_cert() {
 	bundle="/etc/ssl/${name}.bundle.crt"
 	if [ -w $bundle ]; then
 		# as root...
-		cat $crt $INTERMEDIATE_CERTS > $bundle
+		cat $crt > $bundle
 		echo "Installed updated certificate bundle as $bundle"
 	else
 		echo "Skipping installation ($bundle not writable)."

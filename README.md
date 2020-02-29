@@ -9,9 +9,6 @@ Encrypt](https://letsencrypt.org/) certificates.
 - Runs automatically via a cron job
 - Drops privileges to a non-root user for doing the actual renewal operation
 - Uses root privileges only for installing the renewed, validated certificate
-- Installs a complete certificate bundle which includes the domain's
-  certificate, the Let's Encrypt intermediate certificate and the ISRG
-  cross-signing root certificate
 - Does not try to or need to access the domain's private key file (nor should
   you grant access to that file)
 
@@ -122,7 +119,7 @@ Finally, edit root's crontab and add an entry to run
 15      0       15       *       *       /home/le/le_renew_certs.sh -a /home/le/acme_tiny.py -k /home/le/le.key -d /etc/ssl/lets_encrypt_domains.txt -w /home/le -v http -c /var/www/htdocs/.well-known/acme-challenge/
 ```
 
-### Step 3: Install Let's Encrypt certificates
+### Step 3: Understand the Certificate Bundle
 
 The Let's Encrypt intermediate cert
 is copied into a file named `<domain>.bundle.crt` along with the actual
@@ -137,21 +134,6 @@ domain's public certificate. Eg, in nginx:
 ssl_certificate /etc/ssl/packetmiscief.ca.bundle.crt;
 ssl_trusted_certificate /etc/ssl/packetmischief.ca.bundle.crt;
 ```
-
-Download the following certificates from the [Let's
-Encrypt](https://letsencrypt.org/certificates/) site and save them at the
-specified location so `le_renew_certs.sh` knows where to find them:
-- Let's Encrypt Authority X3 (pem format) ->
-  `/etc/ssl/lets-encrypt-x3-cross-signed.pem`
-- Let's Encrypt Authority X4 (pem format) ->
-  `/etc/ssl/lets-encrypt-x4-cross-signed.pem`
-- ISRG Root X1 (pem format) ->
-  `/etc/ssl/lets-encrypt-x1-root.pem`
-
-The X4 cert is optional since Let's Encrypt states they use the X3 cert as
-their main issuing certificate and will only revert to the X4 in the case of a
-disaster. However, having the X4 in your certificate bundle prepares you for
-such an event and requires minimal overhead.
 
 ### Step 4: Create `/etc/ssl/lets_encrypt_domains.txt`
 
